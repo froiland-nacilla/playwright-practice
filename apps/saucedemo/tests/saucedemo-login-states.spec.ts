@@ -1,24 +1,24 @@
 import { expect, test } from '@playwright/test';
 import { SauceDemoLoginPage } from '../pages/SauceDemoLoginPage';
-import { SauceDemoSidebar } from '../pages/SauceDemoSidebar';
+import { SauceDemoMenubar } from '../pages/SauceDemoMenubar';
+import { LOGIN_ERROR_MESSAGES } from '../utils/SauceDemo_LoginErrorMessages';
 import { ENV } from '../utils/SauceDemo_ENV';
-import { LOGIN_ERROR_MESSAGES } from '../utils/SauceDemo_LoginError';
 
 test.describe('Test login functionality', () => {
     let loginPage: SauceDemoLoginPage;
-    let sidebarMenu: SauceDemoSidebar;
+    let sidebarMenu: SauceDemoMenubar;
 
     // Set variables and enter homepage
     test.beforeEach(async ({ page }) => {
         loginPage = new SauceDemoLoginPage(page);
-        sidebarMenu = new SauceDemoSidebar(page);
+        sidebarMenu = new SauceDemoMenubar(page);
         await page.goto(ENV.HOMEPAGE);
-    })
+    });
 
     test('TC#001 - Verify login with valid credentials and logout', async ({ page }) => {
         await test.step('Step#001 - Login with valid credentials', async () => {
             await loginPage.login(ENV.STANDARD_USER, ENV.PASSWORD);
-            await expect(page).toHaveURL('/inventory.html');
+            await expect(sidebarMenu.burgerIcon).toBeVisible();
         });
 
         await test.step('Step#002 - Logout from page', async () => {
