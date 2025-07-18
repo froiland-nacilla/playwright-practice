@@ -13,27 +13,27 @@ export class SauceDemoInventoryPage {
         this.inventoryList = page.locator('.inventory_list')
     }
 
-    async resetInventoryItems() {
-        this.clearInventoryDetails();
-        await this.getInventoryDetails();
-    }
-
-    // check if in inventory page
     async checkInventoryPage() {
         await expect(this.inventoryList).toBeVisible();
+        await this.setupInventoryItems();
+    }
+
+    async setupInventoryItems() {
+        this.clearInventoryDetails();
+        await this.getInventoryDetails();
     }
 
     async getInventoryDetails() {
         if(this._inventoryDetails) return this._inventoryDetails;
         
-        // check the number of elements under inventory list
         const items = this.inventoryList.locator('.inventory_item');
         const itemCount = await items.count();
-
         this._inventoryDetails = [];
 
         for (let i = 0; i < itemCount; i++) {
-            this._inventoryDetails.push(new SauceDemoInventoryItem(items.nth(i)));
+            const newItem = new SauceDemoInventoryItem(items.nth(i));
+            await newItem.getItemDetails(false);
+            this._inventoryDetails.push(newItem);
         }
         
         return this._inventoryDetails;
