@@ -5,7 +5,7 @@ export class SauceDemoInventoryPage {
     readonly page: Page;
     readonly filter: Locator;
     readonly inventoryList: Locator;
-    private _inventoryDetails: SauceDemoInventoryItem[] | undefined;
+    private _inventoryDetails: SauceDemoInventoryItem[];
 
     constructor(page: Page) {
         this.page = page;
@@ -24,15 +24,14 @@ export class SauceDemoInventoryPage {
     }
 
     async getInventoryDetails() {
-        if(this._inventoryDetails) return this._inventoryDetails;
+        this.clearInventoryDetails();
         
         const items = this.inventoryList.locator('.inventory_item');
         const itemCount = await items.count();
-        this._inventoryDetails = [];
 
         for (let i = 0; i < itemCount; i++) {
             const newItem = new SauceDemoInventoryItem(items.nth(i));
-            await newItem.getItemDetails(false);
+            await newItem.setupItemData();
             this._inventoryDetails.push(newItem);
         }
         
@@ -40,6 +39,6 @@ export class SauceDemoInventoryPage {
     }
 
     clearInventoryDetails() {
-        this._inventoryDetails = undefined;
+        this._inventoryDetails = [];
     }
 }

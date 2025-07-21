@@ -1,18 +1,28 @@
-export class SauceDemoItemDetails {
+export class SauceDemoItemData {
     readonly name: string;
     readonly description: string;
     readonly price: string;
-    readonly image: string | undefined; // undefined only for cart items
     readonly isCartItem: boolean; 
-    private _quantity: number;  // purchase quantity could be 0 || > 1 
+    readonly imageSrc: string | undefined; // undefined only for cart items
+    readonly id: string;
+    protected _quantity: number;  // purchase quantity could be 0 || > 1 
 
-    constructor(name: string, description: string, price: string, image: string, quantity: number | undefined, isCartItem: boolean) {
+    constructor(
+        name: string, 
+        description: string, 
+        price: string, 
+        isCartItem: boolean,
+        id: string, 
+        quantity?: number,
+        imageSrc?: string) {
+            
         this.name = name;
         this.description = description;
         this.price = price;
-        this.image = image;
         this.isCartItem = isCartItem;
         this._quantity = quantity ?? 0;
+        this.imageSrc = imageSrc ?? undefined;
+        this.id = id;
     }
 
     get currency(): string {
@@ -37,7 +47,7 @@ export class SauceDemoItemDetails {
         this._quantity--;
     }
 
-    compareItemDetails(itemToCompare: SauceDemoItemDetails): boolean {
+    compareItemData(itemToCompare: SauceDemoItemData): boolean {
         const checkImage = !this.isCartItem && !itemToCompare.isCartItem;
         const checkPurchase = this.isCartItem !== itemToCompare.isCartItem;
 
@@ -45,9 +55,7 @@ export class SauceDemoItemDetails {
         const descMatches = this.description === itemToCompare.description; 
         const priceMatches = this.price === itemToCompare.price;
 
-        // check if both are not cart
-        const imageMatches = checkImage ? this.image === itemToCompare.image : true;
-        // check if both are not inventory but one is a cart
+        const imageMatches = checkImage ? this.imageSrc === itemToCompare.imageSrc : true;
         const purchaseMatches = checkPurchase ? this.quantity === itemToCompare.quantity : true;
 
         const result =  nameMatches && 
@@ -55,10 +63,8 @@ export class SauceDemoItemDetails {
                         priceMatches && 
                         imageMatches && 
                         purchaseMatches;
-
-        // Console Log
-        // console.log(`\n------------- \n### Item matching result: ${result}\nItems to compare:\n***\n${JSON.stringify(this)}\n***\n${JSON.stringify(itemToCompare)}***\n-------------`);
-
+        
+        console.log(`\n--------------\n***Comparing Items***\nItem A: ${JSON.stringify(this)}\n\nItem B: ${JSON.stringify(itemToCompare)}\n***MATCH RESULT: ${result}\nChecked Image ${checkImage}\nChecked Quantity ${checkPurchase}***\n--------------`);
         return result;
     }
 }

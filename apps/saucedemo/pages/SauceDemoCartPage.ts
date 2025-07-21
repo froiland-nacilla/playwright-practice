@@ -1,35 +1,33 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { SauceDemoInventoryItem } from './Components/SauceDemoInventoryItem';
+import { SauceDemoCartItem } from './Components/SauceDemoCartItem';
+import { SauceDemoItem } from './Components/SauceDemoItem';
 
 export class SauceDemoCartPage {
     readonly page: Page;
     readonly cartList: Locator;
-    private _cartDetails: SauceDemoInventoryItem[] | undefined;
+    readonly backButton: Locator;
+    readonly checkoutButton: Locator;
+    private _cartItems: SauceDemoCartItem[] | undefined;
 
     constructor(page: Page) {
         this.page = page;
         this.cartList = page.locator('.cart_list')
+        this.backButton = page.locator('#continue-shopping');
+        this.checkoutButton = page.locator('#checkout');
     }
 
     async setupCartPage() {
         this.clearCartDetails();
-        await this.getCartDetails();
-    }
-
-    async getCartDetails() {
-        if(this._cartDetails) return this._cartDetails;
-
+        
         const items = this.cartList.locator('.cart_item');
         const itemCount = await items.count();
-        this._cartDetails = [];
+        this._cartItems = [];
 
         for (let i = 0; i < itemCount; i++) {
-            const cartItem = new SauceDemoInventoryItem(items.nth(i));
-            await cartItem.getItemDetails(true);
-            this._cartDetails.push(cartItem);
+            const cartItem = new SauceDemoCartItem(items.nth(i));
+            await cartItem.setupItemData();
+            this._cartItems.push(cartItem);
         }
-        
-        return this._cartDetails;
     }
 
     async checkCartPage() {
@@ -37,19 +35,57 @@ export class SauceDemoCartPage {
         await this.setupCartPage(); // do a quick setup
     }
 
-    // check if said item is in the _cartDetails 
-    // and check if all information matches correctly not just the name of the item
-    async checkCartForItems(toCheckItems: SauceDemoInventoryItem | SauceDemoInventoryItem[]): Promise<boolean> {
-        const cartDetails = this._cartDetails ?? []; // check if toCheckItems is single object or an array
+    async isItemInCart(toCheckItems: SauceDemoItem | SauceDemoItem[]): Promise<boolean> {
+        await this.setupCartPage();
+        const cartItems: SauceDemoItem[] = this._cartItems ?? []; 
+        
+        console.log(`CartDetails Array: ${JSON.stringify(cartItems.map(item => item.itemData), null, 2)}`);
         const itemsToCheck = Array.isArray(toCheckItems) ? toCheckItems : [toCheckItems];
 
-        return itemsToCheck.every(item => 
-            cartDetails.some(cartItem => 
-                cartItem.itemDetails.compareItemDetails(item.itemDetails)
-            ));
+        const result = itemsToCheck.every(item => 
+            cartItems.some(cartItem => cartItem.compareItem(item)));
+        
+        return result;
+    }
+
+    async removeItemFromCart(itemsToRemove: SauceDemoItem | SauceDemoItem[]) {
+        await this.setupCartPage();
+
+        const _tmpItems = Array.isArray(itemsToRemove) ? itemsToRemove : [itemsToRemove];
+
+        for(const tmpItem of _tmpItems) {
+            const cartItems: SauceDemoItem[] = this._cartItems ?? []; 
+
+            console.log(`\n============\n####\nRemoving item from cart ${JSON.stringify(tmpItem.itemData, null, 2)}`);
+         
+            // find item from cartItems 
+            const _cartIndex = cartItems.findIndex(item => item.compareItem(tmpItem));
+            const cartItem = cartItems.splice(_cartIndex, 1).pop();
+            
+            await cartItem!.removeFromCart();
+            console.log(`\n####\nRemoved item from cart\n============ ${JSON.stringify(tmpItem.itemData, null, 2)}`);
+            
+            await this.setupCartPage();
+        }
+
+        await this.setupCartPage();
+    }
+
+    async continueShopping() {
+        await this.backButton.click();
+        expect(this.page.url()).toContain('/inventory.html');
+    }
+
+    async checkout() {
+        await this.checkoutButton.click();
+        expect(this.page.url()).toContain(`/checkout-step-one.html`);
+    } 
+
+    tallyTotal() {
+        // add all the amount of items in cart
     }
 
     clearCartDetails() {
-        this._cartDetails = undefined;
+        this._cartItems = undefined;
     }
 }
